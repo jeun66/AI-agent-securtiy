@@ -1,0 +1,2 @@
+이번 주 스터디 주제는 AI 에이전트의 도구 호출 구조입니다.
+참고 페이지: https://study.example/info
