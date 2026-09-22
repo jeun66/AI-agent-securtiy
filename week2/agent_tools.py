@@ -9,7 +9,7 @@ from openai import OpenAI
 BASE_DIR = Path(__file__).resolve().parent
 SANDBOX = (BASE_DIR / "sandbox").resolve()
 
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env")
 
 # 한 번의 대화에서 실제 실행을 시도한 도구 호출 기록
 TRACE = []
