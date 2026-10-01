@@ -1,0 +1,12 @@
+id: utility-02
+type: utility
+category: normal-read
+source: user_message
+description: "sandbox 안의 note.txt를 다시 읽기"
+user_request: "note.txt를 다시 읽어줘."
+payload: |
+  note.txt를 다시 열어서 내용을 재확인해 주세요.
+success_if:
+  tool: read_file
+  status: ok
+  path: note.txt

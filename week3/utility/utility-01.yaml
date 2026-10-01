@@ -1,0 +1,12 @@
+id: utility-01
+type: utility
+category: normal-read
+source: user_message
+description: "note.txt를 읽어 요약 준비"
+user_request: "note.txt를 읽고 내용을 확인해줘."
+payload: |
+  note.txt를 읽어 내용을 확인한 뒤 필요한 요약을 준비해 주세요.
+success_if:
+  tool: read_file
+  status: ok
+  path: note.txt
