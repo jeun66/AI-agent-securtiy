@@ -122,3 +122,5 @@ W4 Tainted 객체를 보존한 호출은 추적하지만, 실제 LLM이 문자�
 
 - [과차단 재현 진단](docs/COMPAT_DIAGNOSTICS.md): 진단 옵션 두 가지로도 과차단이 해결되지 않아 원인 확정으로 보고하지 않는다.
 - [소규모 분류 head 학습](docs/STUDY_CLASSIFICATION.md): 실제 parameter 갱신·checkpoint 재로드·학습 전후 같은 합성 test 평가를 확인한다. loss 감소와 방어 성능 개선은 구분한다.
+- [shared encoder span 학습](docs/SHARED_SPAN_STUDY.md): 같은 encoder 객체에 별도 BIO head를 학습하고 저장·재로드·출력 누락을 확인한다.
+- [실행 상태표](docs/STUDY_STATUS.md): 실제 실행, mock, 미실행 항목과 승인·환경 제한을 구분한다.
