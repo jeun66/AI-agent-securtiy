@@ -2,17 +2,30 @@ import json
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-from openai import OpenAI
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    load_dotenv = None
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    OpenAI = None
 
 
 BASE_DIR = Path(__file__).resolve().parent
 SANDBOX = (BASE_DIR / "sandbox").resolve()
 
-load_dotenv(BASE_DIR.parent / ".env")
+if load_dotenv is not None:
+    load_dotenv(BASE_DIR.parent / ".env")
 
 # 한 번의 대화에서 실제 실행을 시도한 도구 호출 기록
 TRACE = []
+MOCK_CALL_COUNT = {"read_file": 0, "http_get": 0}
+
+
+def reset_mock_counters():
+    MOCK_CALL_COUNT.clear()
+    MOCK_CALL_COUNT.update({name: 0 for name in TOOLS})
 
 # 실제 웹페이지 대신 사용하는 가짜 응답
 MOCK_PAGES = {
@@ -32,12 +45,14 @@ def read_file(path: str):
     if not target.is_relative_to(SANDBOX):
         raise ValueError("sandbox 폴더 밖은 읽을 수 없습니다.")
 
+    MOCK_CALL_COUNT["read_file"] = MOCK_CALL_COUNT.get("read_file", 0) + 1
     return target.read_text(encoding="utf-8")
 
 
 def http_get(url: str):
     # requests.get() 등을 사용하지 않는다.
     # URL에 요청을 보내지 않고 준비된 문자열만 반환한다.
+    MOCK_CALL_COUNT["http_get"] = MOCK_CALL_COUNT.get("http_get", 0) + 1
     return MOCK_PAGES.get(url, "[MOCK] 등록되지 않은 URL입니다.")
 
 
@@ -95,48 +110,67 @@ TOOL_SCHEMAS = [
 # ── 3. 런타임: 제안된 도구 호출을 검증하고 실행 ──
 
 def execute_tool(tool_call):
-    name = tool_call.function.name
-    raw_args = tool_call.function.arguments
+    return execute_tool_with_mode(tool_call, mode="none")
 
+
+def execute_tool_with_mode(tool_call, mode: str = "none"):
+    """Validate final arguments, enforce the selected defenses, then execute."""
+    if mode not in ("none", "policy", "policy+taint"):
+        raise ValueError("Unknown execution mode: " + mode)
+    from week4.taint import is_tainted, collect_sources, check_http_get
+    if mode in ("policy", "policy+taint"):
+        # Missing policy dependencies must never silently disable enforcement.
+        from week3.policy_engine import evaluate_policy
+
+    name = tool_call.function.name
     entry = {
-        "step": len(TRACE) + 1,
-        "tool": name,
-        "args": raw_args,
-        "status": "pending",
+        "step": len(TRACE) + 1, "tool": name, "args": None,
+        "executed_args": None, "status": "pending", "sources": [],
     }
     TRACE.append(entry)
-
     try:
-        args = json.loads(raw_args)
-        entry["args"] = args
-
+        args = json.loads(tool_call.function.arguments)
         if name not in TOOLS:
             raise ValueError(f"허용되지 않은 도구: {name}")
-
-        expected_key = {
-            "read_file": "path",
-            "http_get": "url",
-        }[name]
-
+        expected_key = {"read_file": "path", "http_get": "url"}[name]
         if not isinstance(args, dict) or set(args) != {expected_key}:
             raise ValueError("도구 인자 형식이 올바르지 않습니다.")
-
         if not isinstance(args[expected_key], str):
             raise ValueError("도구 인자는 문자열이어야 합니다.")
 
+        raw = getattr(tool_call, "raw_args_obj", None)
+        if raw is None:
+            raw = args
+        entry["sources"] = sorted(collect_sources(raw))
+        if mode in ("policy", "policy+taint"):
+            decision, reason = evaluate_policy(name, args)
+            entry["policy_decision"] = decision
+            entry["policy_reason"] = reason
+            if decision != "allow":
+                entry.update(status="denied", block_reason="policy",
+                             result=f"denied_by_policy: {reason}")
+                return entry["result"]
+
+        if mode == "policy+taint":
+            if name == "http_get":
+                candidate = raw.get("url") if isinstance(raw, dict) else raw
+                allowed, reason = check_http_get(candidate)
+            else:
+                allowed, reason = not is_tainted(raw), "tainted_arg"
+            if not allowed:
+                entry.update(status="denied", block_reason="taint",
+                             result=f"denied_by_taint: {reason}")
+                return entry["result"]
+
+        entry["args"] = args
+        entry["executed_args"] = args
         print(f"[실행] {name}({args})")
-
-        # 실제 함수 실행은 LLM이 아니라 이 코드가 수행한다.
         result = TOOLS[name](**args)
-
-        entry["status"] = "ok"
-        entry["result"] = result
+        entry.update(status="ok", result=result)
         return result
-
     except Exception as error:
         result = f"도구 오류: {error}"
-        entry["status"] = "error"
-        entry["result"] = result
+        entry.update(status="error", result=result)
         return result
 
 
@@ -149,6 +183,8 @@ def run_agent(user_input: str):
     if not model:
         raise ValueError(".env에 OPENAI_MODEL을 설정해주세요.")
 
+    if OpenAI is None:
+        raise RuntimeError("실제 LLM 실행에는 openai 패키지가 필요합니다.")
     client = OpenAI()
 
     messages = [

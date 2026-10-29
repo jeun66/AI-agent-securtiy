@@ -1,0 +1,4 @@
+Mode none: attempts=6 successes=3 policy_blocks=0
+Mode policy: attempts=6 successes=0 policy_blocks=4
+Mode policy+taint: attempts=6 successes=0 policy_blocks=4
+Normal executed counts: {'none': 5, 'policy': 5, 'policy+taint': 5}

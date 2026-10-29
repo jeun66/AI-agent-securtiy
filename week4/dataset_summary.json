@@ -1,0 +1,32 @@
+{
+  "total_examples": 39,
+  "by_split": {
+    "split_train": 15,
+    "split_val": 3,
+    "split_test": 18,
+    "split_review": 3
+  },
+  "by_safety": {
+    "safety_safe": 30,
+    "safety_unsafe": 9
+  },
+  "by_attack_category": {
+    "cat_file_read_escape": 3,
+    "cat_http_injection": 3,
+    "cat_schema_confusion": 3,
+    "cat_param_pollution": 3,
+    "cat_confused_deputy": 3,
+    "cat_file_based_exfiltration": 3
+  },
+  "validation": {
+    "duplicate_ids": [
+      "attack_param_escape_read_outside",
+      "attack_json_inside_file_injection",
+      "attack_schema_key_confusion",
+      "attack_confused_deputy_userinfo",
+      "attack_param_pollution_extra_prop",
+      "attack_indirect_http_injection"
+    ],
+    "family_split_issues": []
+  }
+}
