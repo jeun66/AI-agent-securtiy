@@ -97,6 +97,11 @@ class RuleGuard:
         hits = tuple(Finding(label, start=m.start(), end=m.end())
                      for label, pattern in rules
                      for m in re.finditer(pattern, text, re.IGNORECASE))
+        if request.direction == "output":
+            from week5.prompts import HARDENED_SYSTEM_PROMPT
+            pos = request.text.find(HARDENED_SYSTEM_PROMPT)
+            if pos >= 0:
+                hits += (Finding("system_prompt", start=pos, end=pos + len(HARDENED_SYSTEM_PROMPT)),)
         return GuardResult("block" if hits else "allow", self.name, self.kind, hits)
 
 

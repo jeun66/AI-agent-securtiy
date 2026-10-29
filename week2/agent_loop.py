@@ -1,11 +1,17 @@
 import json
 import os
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    OpenAI = None
 
 # 실습 1의 도구와 설정 재사용
 # agent_tools를 불러올 때 기존 load_dotenv()도 실행된다.
-from agent_tools import TOOL_SCHEMAS, TRACE, execute_tool
+if __package__:
+    from .agent_tools import TOOL_SCHEMAS, TRACE, execute_tool, execute_tool_with_mode
+else:
+    from agent_tools import TOOL_SCHEMAS, TRACE, execute_tool, execute_tool_with_mode
 
 
 SYSTEM_PROMPT = (
@@ -16,19 +22,34 @@ SYSTEM_PROMPT = (
 )
 
 
-def run_agent(user_input: str, max_steps: int = 8):
+def run_agent(user_input: str, max_steps: int = 8, *, defense_hook=None):
     TRACE.clear()
+
+    if defense_hook is not None:
+        from week5.defense import DefenseHook
+        if not isinstance(defense_hook, DefenseHook):
+            raise TypeError("defense_hook must be a DefenseHook")
+        check = defense_hook.check("input", user_input)
+        TRACE.append({"event": "user_input_guard", "guard_check": check})
+        if check["decision"] != "allow":
+            return {"status": "input_blocked", "answer": "[입력 가드에 의해 요청이 차단되었습니다.]", "steps": 0}
 
     model = os.getenv("OPENAI_MODEL")
     if not model:
         raise ValueError(".env에 OPENAI_MODEL을 설정해주세요.")
 
+    if OpenAI is None:
+        raise RuntimeError("실제 LLM 실행에는 openai 패키지가 필요합니다.")
     client = OpenAI()
 
+    from week5.defense import HARDENED_SYSTEM_PROMPT
+
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": HARDENED_SYSTEM_PROMPT if defense_hook is not None else SYSTEM_PROMPT},
         {"role": "user", "content": user_input},
     ]
+
+    observed_context = ""
 
     for step in range(max_steps):
         print(f"\n[LOOP] {step + 1}/{max_steps}")
@@ -48,20 +69,31 @@ def run_agent(user_input: str, max_steps: int = 8):
 
         # 2. 도구 제안이 없으면 최종 답변으로 종료한다.
         if not proposal.tool_calls:
+            answer = proposal.content or ""
+            status = "completed"
+            if defense_hook is not None:
+                answer, check = defense_hook.filter_output(answer)
+                TRACE.append({"event": "final_output_guard", "guard_check": check})
+                if check["decision"] != "allow":
+                    status = "output_blocked"
             return {
-                "status": "completed",
-                "answer": proposal.content or "",
+                "status": status,
+                "answer": answer,
                 "steps": step + 1,
             }
 
         # 3. 런타임이 도구를 실행한다.
         for call in proposal.tool_calls:
-            print(
-                f"[제안] {call.function.name}"
-                f"({call.function.arguments})"
-            )
+            if defense_hook is None:
+                print(f"[제안] {call.function.name}({call.function.arguments})")
 
-            result = execute_tool(call)
+            if defense_hook is None:
+                result = execute_tool(call)
+            else:
+                result = execute_tool_with_mode(
+                    call, mode="policy+taint+guard", defense_hook=defense_hook,
+                    input_text=user_input, context_text=observed_context)
+                observed_context += "\n" + result
 
             # 4. 실행 결과를 메시지에 붙인다.
             messages.append({
