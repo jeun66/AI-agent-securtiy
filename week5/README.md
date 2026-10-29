@@ -26,7 +26,7 @@ result = agent_tools.execute_tool_with_mode(
 
 `FakeToolCall`은 호출 모양만 모사하며 LLM의 제안을 생성하지 않는다. 여기서 `http_get`은 기존 mock 응답 함수다.
 
-## VS Code Bash 실행·캡처
+## VS Code Bash 실행·텍스트 로그
 
 저장소 루트에서 실행한다. 아래 PY는 W4 복구 때 만든 Python 3.9.6 가상환경이다.
 
@@ -61,18 +61,20 @@ git log -3 --oneline
 git status -sb
 ```
 
-각 단계에서 `OK`와 종료 코드 `0`을 확인한다. 1/2/3단계는 각각 7/23/26개 테스트다. W4 회귀 테스트가 출력하는 `[실행]`은 기존 mock 호출 로그다. 보고서는 이 명령으로 지정한 /tmp 폴더에 남으며 Git 작업 트리를 변경하지 않는다. 단계별 커밋은 별도로 생성되므로 위 캡처 명령에 commit/push를 넣지 않는다.
+각 단계에서 `OK`와 종료 코드 `0`을 확인한다. 1/2/3단계는 각각 7/23/26개 테스트다. W4 회귀 테스트가 출력하는 `[실행]`은 기존 mock 호출 로그다. 보고서는 이 명령으로 지정한 /tmp 폴더에 남으며 Git 작업 트리를 변경하지 않는다. 단계별 커밋은 별도로 생성되므로 위 기록 명령에 commit/push를 넣지 않는다.
 
 ## 실제 결과와 mock의 구분
 
 - `rules`: Python 규칙·정책·오염 코드와 시간 측정은 실제 실행한다. 합성 시나리오, mock HTTP, 로컬 `note.txt`만 사용한다. regex 규칙은 학습 모델이 아니며 한국어/영어의 일부 알려진 표현만 검사한다.
 - `mock`: 가드가 고정 allow를 반환한다. 인젝션·PII 사례도 통과하도록 기대값을 명시했다. `MATCHED=160`은 이 배선 기대값의 일치 횟수이며 방어율·정확도가 아니다.
-- `model`: 이 작업에서는 GLiClass/GLiNER 모델을 다운로드하거나 추론하지 않았다. Llama Guard와 laya도 미연결·미실행이다. 비교 표의 F1·지연은 `null`이다.
+- `model`: 1차 파이프라인 데모에서는 모델을 실행하지 않았으므로 `run_demo` 비교 표는 계속 `null`이다. 이후 GLiClass small 실제 추론과 과차단 확인은 [ZERO_SHOT.md](docs/ZERO_SHOT.md)에 별도로 기록한다. GLiNER·Llama Guard·laya는 미실행이다.
 - latency는 warmup 1 suite를 제외한 20회 × 8개 시나리오의 실제 `perf_counter` 측정이다. total은 전체 로컬 파이프라인, policy/taint/guardrail은 실행된 단계만, guard_input/guard_output은 해당 가드 호출만 집계한다. count가 다른 이유는 조기 차단이다. p50은 중앙값, p95는 nearest-rank다. 모델 로딩·실제 네트워크·LLM 추론 latency는 포함하지 않는다.
 - 합성 시나리오 기대값 일치는 구현의 회귀 검증이다. 사람 검토를 마친 held-out 데이터가 없어 모델 F1을 계산하지 않는다.
 - 출력 가드가 차단한 원문은 공개 TRACE와 보고서에 저장하지 않는다. span offset의 기준은 해당 guard 입력 문자열이다. input 문자열은 사용자 입력 + context + JSON 인자를 포함할 수 있다.
 
 ## GLiClass / GLiNER 연결 준비
+
+GLiClass 실제 추론을 재현하려면 [실행·결과 기록](docs/ZERO_SHOT.md)을 먼저 참고한다.
 
 공식 API 확인 출처:
 
