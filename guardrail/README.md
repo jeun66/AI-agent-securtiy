@@ -46,3 +46,5 @@ python3 -B -m guardrail.validate_data --mode candidate
 후보 검사는 `pending_rows: 24`, `ready_for_benchmark: false`가 정상이다. 실제 평가기는 최종 `eval.jsonl`과 benchmark 검사만 사용한다.
 
 GLiClass 원본 zero-shot과 이전 공부용 head 학습 체크포인트는 다른 실험으로 구분한다. 모델 설치·실제 3모델 측정은 별도 단계다.
+
+공통 평가기와 규칙/mock 검증 명령은 [BENCHMARK.md](BENCHMARK.md)에 있다. 모델 성능·실제 모델 지연으로 해석하지 않는다.
