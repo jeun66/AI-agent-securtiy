@@ -1,0 +1,163 @@
+{
+  "data": {
+    "data_sha256": "3a450cae423b6e1dd35b9923b7a505ef5078bf4c485be68a6bf45d75c6feb59f",
+    "exclusion_sha256": "0b7ec01fbd5feb7eeb0633804c53f8b70cbce26a76d3dce2f6071965bf1b8c03",
+    "base_commit": "77dc67e3ebd08f809598e25833ea66e7e1b5413a",
+    "rows": 24,
+    "source_count": 12,
+    "family_count": 12
+  },
+  "protocol_sha256": "4aed7f1cf18f22bb3c0c6232acbb74f230e9c37e001e7d1047bf353d9cf35321",
+  "conditions": {
+    "device": "cpu",
+    "dtype": "torch.float32",
+    "threads": 2,
+    "interop_threads": 1,
+    "quantization": "none"
+  },
+  "rows": [
+    {
+      "role": "gliclass-base",
+      "variant": "zero_shot",
+      "comparison_role": "additional_baseline",
+      "status": "executed",
+      "metrics": {
+        "tp": 12,
+        "fp": 12,
+        "tn": 0,
+        "fn": 0,
+        "n": 24,
+        "accuracy": 0.5,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "fpr": 1.0,
+        "fnr": 0.0
+      },
+      "latency": {
+        "count": 72,
+        "mean_ms": 18.03682120387546,
+        "p50_ms": 17.022957967128605,
+        "p95_ms": 22.19595806673169
+      },
+      "model_revision": "21edefaf7951f68c68c505f9139ba536d3b448f7",
+      "packages": {
+        "torch": "2.15.0",
+        "transformers": "5.21.0",
+        "gliclass": "0.1.21",
+        "laya": "0.4.22",
+        "numpy": "2.5.4",
+        "safetensors": "0.8.0",
+        "huggingface-hub": "2.3.0"
+      },
+      "parameter_count": 143592193,
+      "forward_passes": 96
+    },
+    {
+      "role": "gliclass-trained",
+      "variant": "study_head_finetuned",
+      "comparison_role": "primary",
+      "status": "executed",
+      "metrics": {
+        "tp": 7,
+        "fp": 1,
+        "tn": 11,
+        "fn": 5,
+        "n": 24,
+        "accuracy": 0.75,
+        "precision": 0.875,
+        "recall": 0.5833333333333334,
+        "f1": 0.7,
+        "fpr": 0.08333333333333333,
+        "fnr": 0.4166666666666667
+      },
+      "latency": {
+        "count": 72,
+        "mean_ms": 18.231848909636028,
+        "p50_ms": 17.310479481238872,
+        "p95_ms": 22.614459041506052
+      },
+      "model_revision": "89fd42fa2738739d7066fb58bfbb91d64fdfb7e12526f792f64c9c8d67974ad2",
+      "packages": {
+        "torch": "2.15.0",
+        "transformers": "5.21.0",
+        "gliclass": "0.1.21",
+        "laya": "0.4.22",
+        "numpy": "2.5.4",
+        "safetensors": "0.8.0",
+        "huggingface-hub": "2.3.0"
+      },
+      "parameter_count": 143592193,
+      "forward_passes": 96
+    },
+    {
+      "role": "laya",
+      "variant": "multilingual_322m_typed_questions",
+      "comparison_role": "primary",
+      "status": "executed",
+      "metrics": {
+        "tp": 11,
+        "fp": 4,
+        "tn": 8,
+        "fn": 1,
+        "n": 24,
+        "accuracy": 0.7916666666666666,
+        "precision": 0.7333333333333333,
+        "recall": 0.9166666666666666,
+        "f1": 0.8148148148148148,
+        "fpr": 0.3333333333333333,
+        "fnr": 0.08333333333333333
+      },
+      "latency": {
+        "count": 72,
+        "mean_ms": 89.70933565837589,
+        "p50_ms": 84.75970849394798,
+        "p95_ms": 115.06158299744129
+      },
+      "model_revision": "7b928d828b7b0e022f929d9bd2e44165aa270148",
+      "packages": {
+        "torch": "2.15.0",
+        "transformers": "5.21.0",
+        "gliclass": "0.1.21",
+        "laya": "0.4.22",
+        "numpy": "2.5.4",
+        "safetensors": "0.8.0",
+        "huggingface-hub": "2.3.0"
+      },
+      "parameter_count": 321908995,
+      "forward_passes": 96
+    },
+    {
+      "role": "llama-guard4",
+      "comparison_role": "primary",
+      "status": "not_run_memory_limit",
+      "metrics": null,
+      "latency": null,
+      "preflight": {
+        "model": "Llama Guard 4 12B",
+        "status": "not_run_memory_limit",
+        "physical_memory_bytes": 17179869184,
+        "estimated_weight_bytes_float32": 48000000000,
+        "required_memory_bytes_estimate": 60000000000,
+        "device": "cpu",
+        "dtype": "torch.float32",
+        "f1": null,
+        "latency_ms": null,
+        "model_inference_executed": false,
+        "gated_access": "not_checked_no_terms_accepted",
+        "quantization": "none",
+        "protocol_sha256": "4aed7f1cf18f22bb3c0c6232acbb74f230e9c37e001e7d1047bf353d9cf35321",
+        "data_sha256": "3a450cae423b6e1dd35b9923b7a505ef5078bf4c485be68a6bf45d75c6feb59f"
+      }
+    }
+  ],
+  "three_model_comparison_complete": false,
+  "scope": "24 human-reviewed synthetic texts; 12 source groups; not deployment validation",
+  "caveats": [
+    "GLiClass baseline blocked every benign input; F1 alone is misleading.",
+    "Prior head tuning used only excluded study material; not trained on eval.jsonl.",
+    "Laya uses typed questions; Llama Guard uses a different vanilla content-safety taxonomy.",
+    "Runs were sequential in separate processes, interrupted in wall-clock time; thermal/load conditions not controlled.",
+    "Llama Guard was not downloaded, executed, or replaced with a quantized model."
+  ]
+}

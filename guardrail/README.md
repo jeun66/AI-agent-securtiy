@@ -48,3 +48,5 @@ python3 -B -m guardrail.validate_data --mode candidate
 GLiClass 원본 zero-shot과 이전 공부용 head 학습 체크포인트는 다른 실험으로 구분한다. 모델 설치·실제 3모델 측정은 별도 단계다.
 
 공통 평가기와 규칙/mock 검증 명령은 [BENCHMARK.md](BENCHMARK.md)에 있다. 모델 성능·실제 모델 지연으로 해석하지 않는다.
+
+3단계의 GLiClass 원본·학습형과 Laya 실제 측정 결과, 12B 메모리 미실행 상태, 사용자 재현 명령은 [MODEL_RESULTS.md](MODEL_RESULTS.md)에 있다. 전체 세 모델 비교 완료로 간주하지 않는다.

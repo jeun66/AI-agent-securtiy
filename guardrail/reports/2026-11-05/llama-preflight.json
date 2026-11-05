@@ -1,0 +1,16 @@
+{
+  "model": "Llama Guard 4 12B",
+  "status": "not_run_memory_limit",
+  "physical_memory_bytes": 17179869184,
+  "estimated_weight_bytes_float32": 48000000000,
+  "required_memory_bytes_estimate": 60000000000,
+  "device": "cpu",
+  "dtype": "torch.float32",
+  "f1": null,
+  "latency_ms": null,
+  "model_inference_executed": false,
+  "gated_access": "not_checked_no_terms_accepted",
+  "quantization": "none",
+  "protocol_sha256": "4aed7f1cf18f22bb3c0c6232acbb74f230e9c37e001e7d1047bf353d9cf35321",
+  "data_sha256": "3a450cae423b6e1dd35b9923b7a505ef5078bf4c485be68a6bf45d75c6feb59f"
+}
