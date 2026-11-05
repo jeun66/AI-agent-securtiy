@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "base_commit": "77dc67e3ebd08f809598e25833ea66e7e1b5413a",
+  "created_date_kst": "2026-11-05",
+  "candidate_file": "eval.candidate.jsonl",
+  "candidate_sha256": "fcfdd42350cf87f930f2d744f5a3289f52c898eed75ef773e7a0e3cab474f772",
+  "exclusion_file": "provenance/exclusion_corpus.jsonl",
+  "exclusion_sha256": "0b7ec01fbd5feb7eeb0633804c53f8b70cbce26a76d3dce2f6071965bf1b8c03",
+  "evaluation_sha256": null,
+  "human_review_complete": false,
+  "counts": {
+    "benign": 12,
+    "prompt_injection": 4,
+    "jailbreak": 4,
+    "system_prompt_extraction": 4
+  },
+  "provenance_inputs": [
+    {
+      "origin": "week4/dataset_w4_draft.jsonl",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "99bad81026c5719faa7ecca85e522296483be0bfee339194ac05324c928c85eb"
+    },
+    {
+      "origin": "week4/dataset_w4_review.jsonl",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "d3ebd399220603e0ba679db7c93247516dd9f086f4072ddc53bcd00e5548a371"
+    },
+    {
+      "origin": "week4/dataset_w4_train.jsonl",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "b43f7b49eea1be8db4b4a8403360b811c62e20b5dfbb8f64589a189b5f90f51b"
+    },
+    {
+      "origin": "week3/attacks/bypass/bypass-01.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "ec31bc605c9f19e1fe694626319c893f1e6bebe70bc06a136364c4e35340d2ae"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-01.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "6879d4453eeaa5364a9309f13d90bc3538a865ae8338919642ff41cb2e8d6004"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-02.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "e96ce66367a05948e8f882c03e8d3dcb7d37832d95227ecc03fe69e5656e5b13"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-03.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "9369924293dd8a6ca5cbe73c07f6ef1843fdfc0e7431a9eef28e72a77d9653db"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-04.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "f2fa8acfd2ac379e888359f276330be07eddf02f93a70548588dded9eebc8b95"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-05.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "e3ff47e88e679d926e8d4f9e678f17cbf289d58725ca77acceec81a7a8e2ef9b"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-06.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "24c5202bfae8e84fd969a2dcc8fb42373bdd459261e987ea12049e3a89529902"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-07.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "83d313beda387712fefa62a426edadd595858cc2f140501c4cef059255ee5e38"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-08.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "e204a949eafe04e87d86a9cdfa8058dd4b7469d491703c8f357a0b94c3342804"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-09.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "dfb2e0bf316723ad6da860d8b1ac81d7cf18387a107f854a41a977954723a782"
+    },
+    {
+      "origin": "week3/attacks/direct/direct-10.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "62bbccfa9973052281217e946ca608fe7b3f517a13032fdf949f9626123b1a90"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-01.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "fb7b881d8de293d80e3e7bbf0285c0a8d17cbaa7a56d0bdfe6bb7842da2df74e"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-02.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "53ab6810bf4671178def5a5725820a07c93646f6fe6d93ac0598747a7cea7950"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-03.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "384baee833a32c6dc5cdea46fea6cedbcc7218a9f308c4f74341c83fddd3ab07"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-04.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "a5df3b1b1c42a65ec84210ac1d72c67e4e73405ea4bcc35e02d3ffd45bb2af0e"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-05.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "7f40533f164c99237cb38bdd70db708f15834f452cf39d2d6821e6ffbe0bad60"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-06.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "25d68ddab91a95f141a77353a61ab76ba900738333faea1b276915d84c52d9fa"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-07.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "30df9b5ccbcee5b418963d5b2f8e81d133aa10bc063d5e45a7ad003a86a610c3"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-08.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "48c8bf25c22ee0fa2b779af201902ed5586d18b7f30284f6edfa014f0a45b39c"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-09.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "06e5578349ad025b0a5a0f69cbb6ffd08abfc008f235ded5afa75f4920c52437"
+    },
+    {
+      "origin": "week3/attacks/indirect/indirect-10.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "1ebc85d7ea89268acfaa0987a4fc5d13b198978101e9ce3f4781365b664cf85b"
+    },
+    {
+      "origin": "week3/utility/utility-01.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "7a2efa58d7a2e113bdec5a09e662f5e87b998d5b6c436fe78fc38faf5bf49ba0"
+    },
+    {
+      "origin": "week3/utility/utility-02.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "66301ec2a7060dc564310793db6870f9848f1cf42f478de6f5738adf8c503e85"
+    },
+    {
+      "origin": "week3/utility/utility-03.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "59ab44a5e1121ee53b197d68341c5fcf87cc58f31d639b0580170293aed802cd"
+    },
+    {
+      "origin": "week3/utility/utility-04.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "2e873041eaced0d6765b331f1c43ebadf72affc2f5ab9e00b3ae5adc3a07d6e0"
+    },
+    {
+      "origin": "week3/utility/utility-05.yaml",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "f836fc8263d6a3f25909121c36e4e9255c486f916bacaf24af14b80f29cae3ea"
+    },
+    {
+      "origin": "week2/sandbox/evil.txt",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "e64a1628240ca43e1b0abf5c06e295da153c2a9ee55cf619a3e62ebd0e4cfb05"
+    },
+    {
+      "origin": "week2/sandbox/note.txt",
+      "kind": "main_snapshot_77dc67e",
+      "file_sha256": "9c8a752acc8545fe0b7a4870ebcaa840ce3e1c248a4929b892dacfe011612791"
+    },
+    {
+      "origin": "local_history/week5/fixtures/study_classification.jsonl",
+      "kind": "previous_local_exposure_snapshot_not_current_main",
+      "file_sha256": "5fce6bd4781281ee0fe3b361d55fb058ba3c8761ad70cd61d9543f974d9416b5"
+    },
+    {
+      "origin": "local_history/week5/fixtures/zero_shot_smoke.jsonl",
+      "kind": "previous_local_exposure_snapshot_not_current_main",
+      "file_sha256": "06b2acee818a3998af9c369f6edba0b9c966aad73a83bd6cb783fcc41d6c9b1e"
+    },
+    {
+      "origin": "local_history/week5/span_study.py:build_span_rows",
+      "kind": "previous_local_exposure_snapshot_not_current_main",
+      "file_sha256": "3db6f6f40176bc804d5c98e098b5c863e05c83287ae3f112cc9ab5c0841198a3"
+    }
+  ],
+  "scope": "assistant_authored_synthetic_candidate_only",
+  "limits": [
+    "Known project material, not a pretraining contamination audit.",
+    "New source/family IDs are authored provenance assertions requiring human review.",
+    "Do not use this eval candidate for training or threshold selection.",
+    "Local history includes prior zero-shot, classification and span study exposures."
+  ]
+}
