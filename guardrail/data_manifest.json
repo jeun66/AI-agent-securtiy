@@ -6,8 +6,8 @@
   "candidate_sha256": "fcfdd42350cf87f930f2d744f5a3289f52c898eed75ef773e7a0e3cab474f772",
   "exclusion_file": "provenance/exclusion_corpus.jsonl",
   "exclusion_sha256": "0b7ec01fbd5feb7eeb0633804c53f8b70cbce26a76d3dce2f6071965bf1b8c03",
-  "evaluation_sha256": null,
-  "human_review_complete": false,
+  "evaluation_sha256": "3a450cae423b6e1dd35b9923b7a505ef5078bf4c485be68a6bf45d75c6feb59f",
+  "human_review_complete": true,
   "counts": {
     "benign": 12,
     "prompt_injection": 4,
@@ -186,11 +186,20 @@
       "file_sha256": "3db6f6f40176bc804d5c98e098b5c863e05c83287ae3f112cc9ab5c0841198a3"
     }
   ],
-  "scope": "assistant_authored_synthetic_candidate_only",
+  "scope": "human_reviewed_assistant_authored_synthetic_eval",
   "limits": [
     "Known project material, not a pretraining contamination audit.",
     "New source/family IDs are authored provenance assertions requiring human review.",
     "Do not use this eval candidate for training or threshold selection.",
     "Local history includes prior zero-shot, classification and span study exposures."
-  ]
+  ],
+  "evaluation_file": "eval.jsonl",
+  "review_approval": {
+    "reviewer": "user_in_this_chat",
+    "reviewer_role": "human",
+    "evidence": "검토 완료",
+    "recorded_at_utc": "2026-11-05T04:08:02.872904+00:00",
+    "approved_candidate_sha256": "fcfdd42350cf87f930f2d744f5a3289f52c898eed75ef773e7a0e3cab474f772",
+    "note": "Recorded after user approval; not independent expert annotation."
+  }
 }

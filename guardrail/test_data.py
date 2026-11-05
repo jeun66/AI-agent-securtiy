@@ -42,8 +42,22 @@ class DataTests(unittest.TestCase):
         self.fails(mode="benchmark", message="human review pending")
 
     def test_unfrozen_manifest_cannot_be_benchmarked(self):
-        with self.assertRaisesRegex(DataError, "not reviewed and frozen"):
-            audit_files(ROOT / "eval.candidate.jsonl", ROOT / "data_manifest.json", "benchmark")
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = json.loads((ROOT / "data_manifest.json").read_text(encoding="utf-8"))
+            manifest.update(human_review_complete=False, evaluation_sha256=None,
+                            exclusion_file=str(ROOT / "provenance/exclusion_corpus.jsonl"))
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(DataError, "not reviewed and frozen"):
+                audit_files(ROOT / "eval.candidate.jsonl", path, "benchmark")
+
+    def test_frozen_eval_preserves_the_approved_candidates(self):
+        report = audit_files(ROOT / "eval.jsonl", ROOT / "data_manifest.json", "benchmark")
+        self.assertEqual(report["approved_rows"], 24)
+        self.assertEqual(report["pending_rows"], 0)
+        self.assertTrue(report["ready_for_benchmark"])
+        rows = load_jsonl(ROOT / "eval.jsonl")
+        self.assertEqual([review_sha256(r) for r in rows], [review_sha256(r) for r in self.rows])
 
     def test_approved_metadata_is_required(self):
         self.rows[0]["review_status"] = "approved"
