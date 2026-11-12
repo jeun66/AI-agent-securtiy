@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from hashlib import sha256
 
+from week7.approval import ApprovalRequest, ApprovalVerifier
 from week7.commands import Command, CommandHop, SignedCommand, encode_fields, verify_command_chain
 from week7.delegation import DelegationVerifier, MAX_CHAIN_LENGTH
 from week7.identity import Challenge, IdentityVerifier
@@ -42,26 +43,32 @@ class GatewayResult:
     reason: str
     tool_invoked: bool = False
     output: str | None = None
+    approval_request: ApprovalRequest | None = None
 
 
 class Gateway:
-    def __init__(self, delegation: DelegationVerifier, policy: OpaPolicy, runtime: LocalFileRuntime):
+    def __init__(self, delegation: DelegationVerifier, policy: OpaPolicy, runtime: LocalFileRuntime,
+                 *, approvals: ApprovalVerifier | None = None):
         self._delegation = delegation
         self._identity = IdentityVerifier(delegation.audience)
         self._policy = policy
         self._runtime = runtime
+        self._approvals = approvals if approvals is not None else ApprovalVerifier()
 
     def issue_challenge(self, actor_did: str, invocation: Invocation) -> Challenge:
         if not isinstance(invocation, Invocation):
             raise ValueError("invalid_invocation")
         return self._identity.issue(actor_did, binding=invocation.binding())
 
-    def invoke(self, invocation: Invocation, nonce: str, signature: bytes) -> GatewayResult:
+    def invoke(self, invocation: Invocation, nonce: str, signature: bytes,
+               *, approval: str | None = None) -> GatewayResult:
         if not isinstance(invocation, Invocation):
             return GatewayResult("DENY", "invalid_invocation")
         try:
-            actor = self._identity.verify(nonce, signature, binding=invocation.binding())
-            grant = invocation.received.grant
+            binding = invocation.binding()
+            actor = self._identity.verify(nonce, signature, binding=binding)
+            command = invocation.received
+            grant = command.grant
             with self._delegation.authorized(invocation.credential, invocation.capabilities,
                                              authenticated_did=actor, requested=grant) as verified:
                 verify_command_chain(invocation.anchor, invocation.hops, invocation.received,
@@ -69,11 +76,23 @@ class Gateway:
                 policy = self._policy.evaluate(actor, grant)
                 if not policy.allow:
                     return GatewayResult("DENY", "policy_denied")
-                if policy.requires_approval:
-                    return GatewayResult("REQUIRE_APPROVAL", "approval_required")
                 self._delegation.require_unexpired(verified)
+                if policy.requires_approval:
+                    request = self._approvals.request(binding, actor, verified.path[0], command)
+                    if approval is None:
+                        return GatewayResult("REQUIRE_APPROVAL", "approval_required", approval_request=request)
+                    self._approvals.consume(approval, request)
+                    self._delegation.require_unexpired(verified)
+                elif command.write_content is not None:
+                    return GatewayResult("DENY", "approval_policy_required")
+                elif approval is not None:
+                    return GatewayResult("DENY", "approval_not_applicable")
+
                 try:
-                    output = self._runtime.run(grant)
+                    if command.write_content is None:
+                        output = self._runtime.run(grant)
+                    else:
+                        output = self._runtime.run(grant, write_content=command.write_content)
                 except (OSError, ValueError):
                     return GatewayResult("ERROR", "runtime_error", tool_invoked=True)
                 return GatewayResult("ALLOW", "allowed", tool_invoked=True, output=output)

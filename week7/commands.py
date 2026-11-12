@@ -22,16 +22,26 @@ class Command:
     instruction: str
     grant: Grant
     command_id: str = field(default_factory=lambda: uuid4().hex)
+    write_content: str | None = None
 
     def __post_init__(self):
         if not all(isinstance(value, str) and value for value in (self.audience, self.instruction, self.command_id)):
             raise ValueError("invalid_command")
         if not isinstance(self.grant, Grant):
             raise ValueError("invalid_command")
+        if self.grant.action == "write_file":
+            if not isinstance(self.write_content, str):
+                raise ValueError("write_content_required")
+            self.write_content.encode("utf-8")
+        elif self.write_content is not None:
+            raise ValueError("unexpected_write_content")
 
     def digest(self) -> str:
         fields = ["agent-trust/command/v1", self.command_id, self.audience,
                   self.instruction, self.grant.action, self.grant.resource]
+        if self.write_content is not None:
+            fields[0] = "agent-trust/command/v2"
+            fields.append(self.write_content)
         return sha256(encode_fields(fields)).hexdigest()
 
 

@@ -42,7 +42,8 @@ def main():
                                   user_policies={user: grants})
 
     def request(grant):
-        command = Command(audience, "Run the exact specified tool on the approved file.", grant)
+        content = "Approved replacement\n" if grant.action == "write_file" else None
+        command = Command(audience, "Run the exact specified tool on the approved file.", grant, write_content=content)
         anchor = sign_command(user_key, command)
         first = forward_command(user_key, middle, command, anchor)
         second = forward_command(middle_key, actor, command, first)
