@@ -31,8 +31,15 @@ class OpaPolicy:
             "actor": actor, "action": grant.action, "resource": grant.resource,
             "authenticated": True, "delegation_valid": True, "command_integrity": True,
         }
+        return self._query("data.agent.authz.decision", data)
+
+    def evaluate_tool(self, grant: Grant) -> PolicyDecision:
+        return self._query("data.agent.authz.policy_only_decision",
+                           {"action": grant.action, "resource": grant.resource})
+
+    def _query(self, query: str, data: dict) -> PolicyDecision:
         command = [self._executable, "eval", "--fail", "--strict-builtin-errors", "--format=raw",
-                   "--stdin-input", "--data", str(self._policy_path), "data.agent.authz.decision"]
+                   "--stdin-input", "--data", str(self._policy_path), query]
         try:
             completed = subprocess.run(command, input=json.dumps(data).encode("ascii"), capture_output=True,
                                        check=True, timeout=self._timeout)

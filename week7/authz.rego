@@ -24,11 +24,26 @@ default requires_approval := false
 
 requires_approval if {
     allow
+    tool_requires_approval
+}
+
+default tool_requires_approval := false
+
+tool_requires_approval if {
+    permitted
     input.action == "write_file"
 }
+
+policy_version := "w7-file-policy-v1"
 
 decision := {
     "allow": allow,
     "requires_approval": requires_approval,
-    "policy_version": "w7-file-policy-v1",
+    "policy_version": policy_version,
+}
+
+policy_only_decision := {
+    "allow": permitted,
+    "requires_approval": tool_requires_approval,
+    "policy_version": policy_version,
 }

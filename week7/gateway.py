@@ -1,6 +1,6 @@
 """Authenticate a tool call and enforce the Rego decision before dispatch."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 from uuid import uuid4
 
@@ -47,6 +47,7 @@ class GatewayResult:
     tool_invoked: bool = False
     output: str | None = None
     approval_request: ApprovalRequest | None = None
+    audit_call_id: str | None = field(default=None, compare=False)
 
 
 @dataclass(slots=True)
@@ -100,7 +101,7 @@ class Gateway:
             result = self._invoke(invocation, nonce, signature, approval, context)
             if self._audit is not None and not context.decision_recorded:
                 self._record(context, "decision", result)
-            return result
+            return replace(result, audit_call_id=context.call_id) if self._audit is not None else result
         except AuditWriteError:
             return GatewayResult("ERROR", "audit_unavailable")
 

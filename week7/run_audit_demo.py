@@ -72,6 +72,28 @@ def run_calls(sandbox: Path, opa: str, audit: SignedAuditLog) -> None:
         raise RuntimeError("sandbox content did not match approved bytes")
 
 
+def check_audit_mutations(log: Path, checkpoint: Path, signer: str) -> dict[str, str]:
+    raw = log.read_bytes()
+    cases = (
+        ("tampered", raw.replace(b'"reason":"allowed"', b'"reason":"forged"', 1), "audit_hash_mismatch"),
+        ("truncated", b"".join(raw.splitlines(keepends=True)[:-1]), "audit_checkpoint_mismatch"),
+    )
+    rejected = {}
+    for label, changed, reason in cases:
+        path = log.with_name(f"{label}.jsonl")
+        with path.open("xb") as stream:
+            stream.write(changed)
+        try:
+            verify_audit(path, signer=signer, checkpoint=checkpoint)
+        except ValueError as exc:
+            if str(exc) != reason:
+                raise
+            rejected[label] = reason
+        else:
+            raise RuntimeError(f"{label} audit unexpectedly passed verification")
+    return rejected
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -97,23 +119,8 @@ def main() -> None:
     with (args.output_dir / "delegation.md").open("x", encoding="utf-8") as stream:
         stream.write(delegation_markdown(result.events[0]))
 
-    raw = log.read_bytes()
-    cases = (
-        ("tampered", raw.replace(b'"reason":"allowed"', b'"reason":"forged"', 1), "audit_hash_mismatch"),
-        ("truncated", b"".join(raw.splitlines(keepends=True)[:-1]), "audit_checkpoint_mismatch"),
-    )
-    for label, changed, reason in cases:
-        path = args.output_dir / f"{label}.jsonl"
-        with path.open("xb") as stream:
-            stream.write(changed)
-        try:
-            verify_audit(path, signer=signer, checkpoint=checkpoint)
-        except ValueError as exc:
-            if str(exc) != reason:
-                raise
-            print(f"{label} audit: REJECTED ({reason})")
-        else:
-            raise RuntimeError(f"{label} audit unexpectedly passed verification")
+    for label, reason in check_audit_mutations(log, checkpoint, signer).items():
+        print(f"{label} audit: REJECTED ({reason})")
     print(f"evidence_dir={args.output_dir.resolve()}")
 
 

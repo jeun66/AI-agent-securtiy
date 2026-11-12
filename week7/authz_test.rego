@@ -2,6 +2,7 @@ package agent.authz_test
 
 import rego.v1
 import data.agent.authz.decision
+import data.agent.authz.policy_only_decision
 
 valid_input := {
     "actor": "authenticated-lab-agent",
@@ -32,4 +33,9 @@ test_each_attestation_is_required[field] if {
 test_default_deny_other_resources if {
     result := decision with input as object.union(valid_input, {"resource": "evil.txt"})
     result == {"allow": false, "requires_approval": false, "policy_version": "w7-file-policy-v1"}
+}
+
+test_policy_only_requires_approval_without_asserting_identity if {
+    result := policy_only_decision with input as {"action": "write_file", "resource": "note.txt"}
+    result == {"allow": true, "requires_approval": true, "policy_version": "w7-file-policy-v1"}
 }
