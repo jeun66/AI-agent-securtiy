@@ -33,3 +33,19 @@ python -B -m week7.run_delegation_demo
 ```
 
 데모는 실제 Ed25519 키와 서명으로 정상 읽기, 토큰 서명 위조, 서명이 유효한 권한 확대, 정책 축소 전후, 부모 회수 후의 요청을 검증한다. 출력은 로컬 권한 판정이며 파일 접근은 4단계 Gateway와 Runtime 연결에서 확인한다.
+
+## 4단계 · OPA, Gateway, 최초 명령 무결성
+
+사용자가 최초 명령의 텍스트·도구·대상을 함께 서명한다. 전달자는 원본 명령 해시, 직전 링크의 해시, 송신자와 수신자를 묶어 서명한다. Gateway는 모든 서명과 전달 순서를 검증된 위임 경로와 대조하고, 최종 요청이 최초 명령과 같은지 확인한다. 에이전트의 챌린지 서명도 이 도구 요청에 묶이므로 다른 요청으로 옮기거나 재사용할 수 없다.
+
+Gateway는 확인된 신원과 위임·명령 검증 결과만 로컬 OPA CLI에 전달한다. Rego는 기본 거부 정책으로 `note.txt` 읽기를 허용하고 쓰기는 `REQUIRE_APPROVAL`로 돌려준다. CLI 오류와 잘못된 판정은 실행 전에 차단한다. Runtime은 승인된 읽기에만 샌드박스 파일을 열고, 심볼릭 링크와 하드 링크를 거부한다. 사용자 정책 축소와 회수 변경은 진행 중인 호출의 권한 검사와 파일 실행 사이에 끼어들지 않는다. [OPA CLI](https://www.openpolicyagent.org/docs/cli)
+
+저장소 루트에서 1단계 가상환경을 사용한다. `OPA_BIN`은 OPA 실행 파일 경로로 설정하거나, `opa`가 `PATH`에 있으면 생략한다.
+
+```bash
+"${OPA_BIN:-opa}" test -v week7/authz.rego week7/authz_test.rego
+python -B -m pytest -q -p no:cacheprovider week7
+python -B -m week7.run_gateway_demo
+```
+
+데모는 임시 샌드박스에서 `note.txt`를 실제로 읽고 내용 일치를 확인한다. 명령 변조, 위임 초과, Rego 정책 거부, 미승인 쓰기와 OPA 실행 실패는 `tool_invoked=false`로 출력된다. 이번 Gateway는 로컬 프로세스에서 동작한다.

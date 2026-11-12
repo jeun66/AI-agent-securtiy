@@ -1,6 +1,7 @@
 """Issue and enforce attenuating, signed capability chains for the local lab."""
 
-from collections.abc import Callable, Collection, Iterable, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from hashlib import sha256
 import re
@@ -43,6 +44,7 @@ class VerifiedDelegation:
     path: tuple[str, ...]
     token_digests: tuple[str, ...]
     effective_grants: frozenset[Grant]
+    expires_at: int
 
 
 def _digest(token: str) -> str:
@@ -131,6 +133,14 @@ class DelegationVerifier:
         self._revoked: set[tuple[str, str]] = set()
         self._lock = Lock()
 
+    @property
+    def audience(self) -> str:
+        return self._audience
+
+    def require_unexpired(self, verified: VerifiedDelegation) -> None:
+        if self._clock() >= verified.expires_at:
+            raise ValueError("capability_inactive")
+
     def narrow_user_policy(self, user_did: str, grants: Iterable[Grant]) -> None:
         narrowed = frozenset(grants)
         with self._lock:
@@ -149,6 +159,13 @@ class DelegationVerifier:
     def authorize(self, credential: str, chain: list[str] | tuple[str, ...], *, authenticated_did: str,
                   requested: Grant) -> VerifiedDelegation:
         """Authorize one action using the DID returned by the identity verifier."""
+        with self.authorized(credential, chain, authenticated_did=authenticated_did, requested=requested) as verified:
+            return verified
+
+    @contextmanager
+    def authorized(self, credential: str, chain: list[str] | tuple[str, ...], *, authenticated_did: str,
+                   requested: Grant) -> Iterator[VerifiedDelegation]:
+        """Keep the policy and revocation state stable until the guarded action finishes."""
         if not isinstance(chain, (list, tuple)):
             raise ValueError("invalid_chain_length")
         chain = tuple(chain)
@@ -183,7 +200,7 @@ class DelegationVerifier:
             effective = self._ceiling & user_grants & leaf.grants
             if requested not in effective:
                 raise ValueError("scope_denied")
-            return VerifiedDelegation(
+            yield VerifiedDelegation(
                 (root.issuer, *(capability.subject for capability in capabilities)),
-                tuple(capability.digest for capability in capabilities), effective,
+                tuple(capability.digest for capability in capabilities), effective, leaf.expires_at,
             )

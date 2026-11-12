@@ -52,9 +52,13 @@ class Challenge:
     did: str
     audience: str
     nonce: str
+    binding: str | None = None
 
     def signing_bytes(self) -> bytes:
-        fields = ["agent-trust/identity-challenge/v1", self.did, self.audience, self.nonce]
+        if self.binding is None:
+            fields = ["agent-trust/identity-challenge/v1", self.did, self.audience, self.nonce]
+        else:
+            fields = ["agent-trust/identity-challenge/v2", self.did, self.audience, self.nonce, self.binding]
         return json.dumps(fields, separators=(",", ":"), ensure_ascii=True).encode("ascii")
 
 
@@ -82,7 +86,7 @@ class IdentityVerifier:
         self._pending: dict[str, _PendingChallenge] = {}
         self._lock = Lock()
 
-    def issue(self, did: str) -> Challenge:
+    def issue(self, did: str, *, binding: str | None = None) -> Challenge:
         try:
             verify_key = resolve_did_key(did)
         except ValueError:
@@ -93,13 +97,13 @@ class IdentityVerifier:
                 nonce: record for nonce, record in self._pending.items()
                 if record.expires_at > now
             }
-            challenge = Challenge(did, self._audience, token_hex(32))
+            challenge = Challenge(did, self._audience, token_hex(32), binding)
             self._pending[challenge.nonce] = _PendingChallenge(
                 challenge, verify_key, now + self._ttl,
             )
             return challenge
 
-    def verify(self, nonce: str, signature: bytes) -> str:
+    def verify(self, nonce: str, signature: bytes, *, binding: str | None = None) -> str:
         """Return the authenticated DID from the server's challenge record."""
         if not isinstance(nonce, str) or len(nonce) != 64:
             raise AuthenticationError("challenge_unknown_or_used")
@@ -112,6 +116,8 @@ class IdentityVerifier:
             if self._clock() >= pending.expires_at:
                 del self._pending[nonce]
                 raise AuthenticationError("challenge_expired")
+            if pending.challenge.binding != binding:
+                raise AuthenticationError("challenge_binding_mismatch")
             try:
                 pending.verify_key.verify(pending.challenge.signing_bytes(), signature)
             except BadSignatureError:
