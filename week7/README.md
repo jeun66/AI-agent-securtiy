@@ -63,3 +63,23 @@ python -B -m week7.run_approval_demo
 ```
 
 데모는 미승인·변경된 요청·재사용을 차단하고, 승인한 원래 요청에서만 임시 파일을 실제로 바꾼다.
+
+## 6단계 · 서명 감사 로그와 위임 경로
+
+`SignedAuditLog`를 연결한 Gateway는 호출별 판정과 도구 실행 결과를 JSONL에 기록한다. 기록에는 인증된 DID, 요청 해시, 도구와 대상, Rego가 반환한 정책 버전, 검증한 위임 경로가 들어간다. 명령 본문, 파일 내용, VC·capability·승인 토큰 원문은 기록하지 않는다.
+
+각 기록은 직전 SHA-256 해시를 포함하고 Ed25519로 서명된다. 실행 전 판정 기록을 저장하지 못하면 도구를 호출하지 않는다. 도구 실행 뒤 기록에 실패하면 결과 반환을 중단하고, 검증기가 실행 기록 누락을 표시한다.
+
+서명된 체크포인트는 로그 식별자, 기록 수, 마지막 해시, 순서가 있는 머클 루트를 고정한다. 신뢰할 서명자 DID와 최신 체크포인트를 로그와 별도로 보관해야 올바른 서명이 있는 로그 뒷부분의 삭제도 탐지할 수 있다. 머클 루트는 RFC 9162의 트리 해시를 사용한다. [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html#section-2.1.1)
+
+저장소 루트에서 1단계 가상환경과 `OPA_BIN`을 사용한다. 데모는 고유 폴더에 `audit.jsonl`, `checkpoint.json`, 공개 `audit-signer.did`, Mermaid 위임 경로 `delegation.md`와 변조 실험용 복사본을 남긴다.
+
+```bash
+W7_EVIDENCE=$(mktemp -d)
+python -B -m week7.run_audit_demo --output-dir "$W7_EVIDENCE"
+python -B -m week7.audit --audit "$W7_EVIDENCE/audit.jsonl" \
+  --signer "$(cat "$W7_EVIDENCE/audit-signer.did")" \
+  --checkpoint "$W7_EVIDENCE/checkpoint.json"
+```
+
+검증기는 성공 시 `0`, 해시·서명·체크포인트 불일치 시 `1`, 서명은 유효하지만 실행 결과가 빠졌을 때 `2`를 반환한다. 데모는 로컬 파일을 읽고 자동 승인된 쓰기를 실행한 뒤 원본, 한 줄 변조, 마지막 기록 삭제를 각각 검증한다.

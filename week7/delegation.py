@@ -45,6 +45,7 @@ class VerifiedDelegation:
     token_digests: tuple[str, ...]
     effective_grants: frozenset[Grant]
     expires_at: int
+    delegated_grants: tuple[frozenset[Grant], ...]
 
 
 def _digest(token: str) -> str:
@@ -203,4 +204,5 @@ class DelegationVerifier:
             yield VerifiedDelegation(
                 (root.issuer, *(capability.subject for capability in capabilities)),
                 tuple(capability.digest for capability in capabilities), effective, leaf.expires_at,
+                tuple(capability.grants for capability in capabilities),
             )

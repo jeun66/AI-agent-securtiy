@@ -27,4 +27,8 @@ requires_approval if {
     input.action == "write_file"
 }
 
-decision := {"allow": allow, "requires_approval": requires_approval}
+decision := {
+    "allow": allow,
+    "requires_approval": requires_approval,
+    "policy_version": "w7-file-policy-v1",
+}

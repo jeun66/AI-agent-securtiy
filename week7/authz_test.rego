@@ -14,22 +14,22 @@ valid_input := {
 
 test_verified_read if {
     result := decision with input as valid_input
-    result == {"allow": true, "requires_approval": false}
+    result == {"allow": true, "requires_approval": false, "policy_version": "w7-file-policy-v1"}
 }
 
 test_verified_write_requires_approval if {
     result := decision with input as object.union(valid_input, {"action": "write_file"})
-    result == {"allow": true, "requires_approval": true}
+    result == {"allow": true, "requires_approval": true, "policy_version": "w7-file-policy-v1"}
 }
 
 test_each_attestation_is_required[field] if {
     some field in {"actor", "authenticated", "delegation_valid", "command_integrity"}
     missing := object.remove(valid_input, {field})
     result := decision with input as missing
-    result == {"allow": false, "requires_approval": false}
+    result == {"allow": false, "requires_approval": false, "policy_version": "w7-file-policy-v1"}
 }
 
 test_default_deny_other_resources if {
     result := decision with input as object.union(valid_input, {"resource": "evil.txt"})
-    result == {"allow": false, "requires_approval": false}
+    result == {"allow": false, "requires_approval": false, "policy_version": "w7-file-policy-v1"}
 }

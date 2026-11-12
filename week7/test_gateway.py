@@ -9,9 +9,11 @@ from unittest.mock import Mock
 import pytest
 
 from week7.approval import APPROVAL_TYPE, ApprovalVerifier, issue_approval
+from week7.audit import AuditWriteError, SignedAuditLog, verify_audit
 from week7.commands import Command, forward_command, sign_command
 from week7.credentials import issue_credential
 from week7.delegation import DelegationVerifier, issue_capability
+from week7.delegation_graph import delegation_markdown
 from week7.gateway import Gateway, GatewayResult, Invocation
 from week7.identity import generate_identity
 from week7.opa import OpaPolicy, PolicyDecision
@@ -334,3 +336,85 @@ def test_write_failure_preserves_old_content_and_consumes_token(lab, tmp_path, m
     assert note.read_bytes() == original
     assert set(tmp_path.iterdir()) == {note}
     assert lab.invoke(gateway, invocation, approval=token) == GatewayResult("DENY", "approval_already_used")
+
+
+def test_real_gateway_signs_decisions_and_results_without_raw_payloads(lab, tmp_path, opa_executable):
+    path, checkpoint = tmp_path / "audit.jsonl", tmp_path / "checkpoint.json"
+    signer, key = generate_identity()
+    invocation = lab.sign_request(Command(AUDIENCE, "private-command-text", READ))
+    (tmp_path / "note.txt").write_text("private-result-text", encoding="utf-8")
+    with SignedAuditLog(path, key) as audit:
+        gateway = Gateway(lab.verifier, OpaPolicy(opa_executable), LocalFileRuntime(tmp_path), audit=audit)
+        assert lab.invoke(gateway, invocation).output == "private-result-text"
+        assert gateway.invoke(invocation, "0" * 64, bytes(64)).decision == "DENY"
+        audit.write_checkpoint(checkpoint)
+
+    result = verify_audit(path, signer=signer, checkpoint=checkpoint)
+    decision, execution, denied = result.events
+    assert (decision["phase"], execution["phase"], denied["phase"]) == ("decision", "execution", "decision")
+    assert decision["call_id"] == execution["call_id"] != denied["call_id"]
+    assert decision["actor_id"] == execution["actor_id"] == lab.actor
+    assert decision["request_hash"] == invocation.binding()
+    assert decision["policy_version"] == "w7-file-policy-v1"
+    assert denied["actor_id"] is None and denied["policy_version"] is None
+    assert not result.missing_executions
+    assert "read_file note.txt" in delegation_markdown(decision)
+    raw = path.read_text(encoding="ascii")
+    for value in ("private-command-text", "private-result-text", invocation.credential, *invocation.capabilities):
+        assert value not in raw
+
+
+def test_gateway_never_executes_if_the_decision_cannot_be_audited(lab, tmp_path):
+    _, key = generate_identity()
+    policy, runtime = Mock(spec=OpaPolicy), Mock(spec=LocalFileRuntime)
+    policy.evaluate.return_value = PolicyDecision(True, False)
+    with SignedAuditLog(tmp_path / "audit.jsonl", key) as audit:
+        gateway = Gateway(lab.verifier, policy, runtime, audit=audit)
+    assert lab.invoke(gateway, lab.request()) == GatewayResult("ERROR", "audit_unavailable")
+    runtime.run.assert_not_called()
+
+
+def test_audit_detects_a_missing_execution_record_and_withholds_output(lab, tmp_path, monkeypatch):
+    signer, key = generate_identity()
+    path = tmp_path / "audit.jsonl"
+    policy, runtime = Mock(spec=OpaPolicy), Mock(spec=LocalFileRuntime)
+    policy.evaluate.return_value = PolicyDecision(True, False)
+    runtime.run.return_value = "output must not be released"
+    with SignedAuditLog(path, key) as audit:
+        append = audit.append
+
+        def fail_result(event):
+            if event["phase"] == "execution":
+                raise AuditWriteError("simulated audit failure")
+            append(event)
+
+        monkeypatch.setattr(audit, "append", fail_result)
+        gateway = Gateway(lab.verifier, policy, runtime, audit=audit)
+        assert lab.invoke(gateway, lab.request()) == GatewayResult("ERROR", "audit_result_unavailable", True)
+        runtime.run.assert_called_once_with(READ)
+
+    result = verify_audit(path, signer=signer)
+    assert result.missing_executions == (result.events[0]["call_id"],)
+
+
+def test_expiry_while_persisting_decision_is_audited_without_execution(lab, tmp_path, monkeypatch):
+    signer, key = generate_identity()
+    path = tmp_path / "audit.jsonl"
+    policy, runtime = Mock(spec=OpaPolicy), Mock(spec=LocalFileRuntime)
+    policy.evaluate.return_value = PolicyDecision(True, False)
+    with SignedAuditLog(path, key) as audit:
+        append = audit.append
+
+        def delay_decision(event):
+            append(event)
+            if event["phase"] == "decision":
+                lab.now[0] = NOW + 15
+
+        monkeypatch.setattr(audit, "append", delay_decision)
+        gateway = Gateway(lab.verifier, policy, runtime, audit=audit)
+        assert lab.invoke(gateway, lab.request()) == GatewayResult("DENY", "capability_inactive")
+        runtime.run.assert_not_called()
+
+    result = verify_audit(path, signer=signer)
+    assert len(result.events) == 2 and not result.missing_executions
+    assert result.events[1]["decision"] == "DENY" and not result.events[1]["tool_invoked"]

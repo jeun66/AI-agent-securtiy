@@ -15,6 +15,7 @@ DEFAULT_POLICY = Path(__file__).with_name("authz.rego")
 class PolicyDecision:
     allow: bool
     requires_approval: bool
+    version: str | None = None
 
 
 class OpaPolicy:
@@ -41,9 +42,13 @@ class OpaPolicy:
             decision = json.loads(completed.stdout)
         except (ValueError, RecursionError):
             raise ValueError("invalid_policy_decision") from None
-        if not isinstance(decision, dict) or set(decision) != {"allow", "requires_approval"}:
+        required = {"allow", "requires_approval"}
+        if not isinstance(decision, dict) or set(decision) not in (required, required | {"policy_version"}):
             raise ValueError("invalid_policy_decision")
         allow, requires_approval = decision["allow"], decision["requires_approval"]
         if type(allow) is not bool or type(requires_approval) is not bool or (requires_approval and not allow):
             raise ValueError("invalid_policy_decision")
-        return PolicyDecision(allow, requires_approval)
+        version = decision.get("policy_version")
+        if "policy_version" in decision and (not isinstance(version, str) or not version):
+            raise ValueError("invalid_policy_decision")
+        return PolicyDecision(allow, requires_approval, version)

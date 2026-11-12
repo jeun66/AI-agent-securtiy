@@ -62,7 +62,11 @@ class ApprovalVerifier:
     def request(self, request_hash: str, actor: str, approver: str, command: Command) -> ApprovalRequest:
         return ApprovalRequest(request_hash, actor, approver, self._instance, command)
 
-    def consume(self, token: str, request: ApprovalRequest) -> None:
+    def require_unexpired(self, expires_at: int) -> None:
+        if self._clock() >= expires_at:
+            raise ValueError("approval_inactive")
+
+    def consume(self, token: str, request: ApprovalRequest) -> int:
         try:
             signer, body = verify_token(token, APPROVAL_TYPE)
         except ValueError:
@@ -86,3 +90,4 @@ class ApprovalVerifier:
             if approval_id in self._used:
                 raise ValueError("approval_already_used")
             self._used.add(approval_id)
+            return end
