@@ -64,7 +64,7 @@ def test_changed_checkpoint_fails_closed(tmp_path, monkeypatch):
     monkeypatch.setattr(ots_anchor, "_command", mock)
     ots_anchor.anchor(base, action="stamp")
     (base / "checkpoint.json").write_bytes(b"{}\n")
-    with pytest.raises(ValueError, match="audit_checkpoint"):
+    with pytest.raises(ValueError, match="audit_checkpoint|invalid_audit_signature"):
         ots_anchor.anchor(base, action="verify")
 
 

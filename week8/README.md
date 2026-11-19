@@ -137,3 +137,25 @@ confirmation**. Only an OTS Bitcoin-block success plus a verified W7 signed
 checkpoint yields `state=verified`; otherwise the result is `pending` or a
 failure. The `check` action independently exercises log-tamper and log-deletion
 detection without changing the original evidence.
+
+## Stage 6 — cumulative and leave-one-out ablation
+
+The **lab-only** `week8.ablation.ExperimentGateway` performs actual validation
+bypasses for the selected **disabled** layer, with a trusted synthetic actor
+path and isolated temporary file tools. It never changes the W7 production
+`Gateway`. The normal full pipeline remains unchanged.
+
+There are 15 named conditions: no checks, seven cumulative levels, and seven
+leave-one-out levels. The synthetic W7 ASR denominator is explicitly **12
+tasks**: the eight W8 adaptive tasks plus four isolation probes for identity,
+policy, taint and guard. This new ablation score is **not** the step-3 eight-task
+adaptive ASR. The mock HTTP taint probe is reported separately.
+
+```bash
+OPA_BIN=opa python -B -m week8.ablation --repeats 3 --output-dir /tmp/w8-ablation
+python -B -m pytest -q week8/test_ablation.py
+```
+
+Output: `report.json`, `ablation.md`, `audit.jsonl`, `checkpoint.json`,
+`audit-signer.did`. Detailed rows include executed/blocked trace, utility,
+FPR, p50/p95, and per-case outcomes. No numbers exist until run locally.
