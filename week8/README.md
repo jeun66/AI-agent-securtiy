@@ -110,3 +110,30 @@ OPA_BIN=opa python -m week8.adaptive --phase after --output-dir /tmp/w8-adapt-af
 python -m week8.patch_compare --before /tmp/w8-adapt-before/report.json --after /tmp/w8-adapt-after/report.json --output-dir /tmp/w8-patch-compare
 python -m pytest -q week4/test_taint_propagation.py week8/test_pipeline.py week8/test_patch_compare.py
 ```
+
+## Stage 5 — external OpenTimestamps commitment
+
+Only runs when the user chooses to submit a real, verified evidence bundle.
+The original **signed `checkpoint.json`** includes the audit Merkle root,
+record count and head; timestamping that exact file binds those values to an
+OpenTimestamps commitment (the timestamped file hash is SHA256(checkpoint.json)).
+Keep `checkpoint.json`, `audit.jsonl`, `audit-signer.did`,
+`checkpoint.json.ots` and `anchor-status.json` together.
+
+```bash
+python -m pip install opentimestamps-client
+python -m week8.ots_anchor check --evidence-dir /tmp/w8-adapt-after
+python -m week8.ots_anchor stamp --evidence-dir /tmp/w8-adapt-after
+# Bitcoin confirmation can take hours. While pending, run other tests.
+python -m week8.ots_anchor upgrade --evidence-dir /tmp/w8-adapt-after
+python -m week8.ots_anchor verify --evidence-dir /tmp/w8-adapt-after
+```
+
+Stamping requires the real OTS CLI and an Internet-accessible calendar.
+Verification normally requires an accessible Bitcoin Core node (see the official
+OpenTimestamps client README). A stamp request, calendar acknowledgement,
+successful `upgrade`, or unit-test fake client **does not prove Bitcoin
+confirmation**. Only an OTS Bitcoin-block success plus a verified W7 signed
+checkpoint yields `state=verified`; otherwise the result is `pending` or a
+failure. The `check` action independently exercises log-tamper and log-deletion
+detection without changing the original evidence.
