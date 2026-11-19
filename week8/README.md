@@ -161,3 +161,8 @@ python -B -m pytest -q week8/test_ablation.py
 Output: `report.json`, `ablation.md`, `audit.jsonl`, `checkpoint.json`,
 `audit-signer.did`. Detailed rows include executed/blocked trace, utility,
 FPR, p50/p95, and per-case outcomes. No numbers exist until run locally.
+
+
+## Stage 7/8 — model inference and integrated leaderboard
+
+See [STAGE7_8.md](STAGE7_8.md) for real model forward-pass evaluation, W7 integration probes, optional GLiNER PII span metrics, the separated-denominator leaderboard, and the evidence checklist. The code is committed, **not executed**; unavailable models retain null metrics.
