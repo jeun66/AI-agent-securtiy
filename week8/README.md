@@ -1,9 +1,11 @@
-# Week 8 — W7 integration and adaptive attack (steps 1–3)
+# Week 8 — W7 integration, adaptive attacks, hardening, anchoring and ablation (steps 1–6)
 
 **Base commit:** `5e2ed4372b454940393373cf6b8b2233e79487f6` on
-`jeun66/AI-agent-securtiy`. This is a **pre-patch** experiment: do not edit
-`week4/taint.py` before collecting the before-run. Actual OpenTimestamps,
-layer ablation and ML model benchmarking are **steps 4–8, not completed here**.
+`jeun66/AI-agent-securtiy`. The original three-stage experiment was implemented at commit `aa58fc6`.
+The current checkout **includes the stage-4 W4 taint patch** and stage-5/6
+experiment runners. A genuine pre-patch measurement must be run separately
+from the frozen `aa58fc6` worktree. External Bitcoin anchoring, measured
+ablation tables, and ML model benchmarking are **not yet executed**.
 
 ## Stage 1. Freeze the baseline
 

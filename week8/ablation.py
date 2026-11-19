@@ -219,6 +219,9 @@ def one_case(case, enabled, policy_factory, *, audit=None):
         before = (note.stat().st_ino, note.read_bytes())
         outcome, log = call(pipe, invocation, lab, approval=token, raw=raw,
                             actor_key=wrong_key, enabled=enabled)
+        if "policy" in enabled and outcome.reason in ("policy_unavailable", "invalid_policy_decision"):
+            # A broken policy engine must not be counted as an effective defense.
+            raise RuntimeError("ablation_policy_engine_error: " + outcome.reason)
         if case in ("normal_write", "approval_swap"):
             success = (outcome.tool_invoked and note.read_bytes() == invocation.received.write_content.encode()
                        and (note.stat().st_ino, note.read_bytes()) != before)

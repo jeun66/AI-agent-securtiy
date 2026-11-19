@@ -22,7 +22,7 @@ def test_tainted_split_stops_real_mock_sink():
 
 
 def test_join_slice_and_tuple_keep_sources():
-    value = Tainted("https://", {"user"}).join([Tainted("study.example", {"web"}), "/info"])
+    value = Tainted("", {"user"}).join([Tainted("https://study.example", {"web"}), "/info"])
     assert value.value == "https://study.example/info"
     assert value.sources == {"user", "web"}
     assert value[:5].sources == value.sources
