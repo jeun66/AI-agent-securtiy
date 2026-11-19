@@ -81,9 +81,9 @@ class Tainted:
         if callable(attr):
             def fn(*args, **kwargs):
                 res = attr(*args, **kwargs)
-                if isinstance(res, str):
-                    return Tainted(res, set(self.sources))
-                return res
+                # Strings AND containers returned by string methods must inherit
+                # sources. Never return bare split/partition output.
+                return self._wrap_result(res)
 
             return fn
         return attr
