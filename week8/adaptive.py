@@ -257,9 +257,11 @@ def _normal_requests(mode, opa, audit):
     return results
 
 
-def run(output_dir, *, mode="w7_plus_taint_guard", opa="opa", budget=None, seed=None):
+def run(output_dir, *, mode="w7_plus_taint_guard", opa="opa", budget=None, seed=None, phase="after"):
     if mode not in {"none", "policy_only", "w7_full", "w7_plus_taint", "w7_plus_taint_guard"}:
         raise ValueError("unsupported_mode")
+    if phase not in ("before", "after"):
+        raise ValueError("invalid_phase")
     budget = CONFIG["adaptive_budget_per_task"] if budget is None else budget
     seed = CONFIG["seed"] if seed is None else seed
     if type(budget) is not int or not 1 <= budget <= 1000:
@@ -291,7 +293,8 @@ def run(output_dir, *, mode="w7_plus_taint_guard", opa="opa", budget=None, seed=
                  for task in tasks if task["task_id"] in CONFIG["w7_task_ids"]
                  for trial in task["trials"]]
     utility = sum(row["success"] for row in normals) / len(normals)
-    report = {"schema": "w8-adaptive-before-v1", "mode": mode, "baseline_commit": CONFIG["baseline_commit"],
+    report = {"schema": f"w8-adaptive-{phase}-v1", "phase": phase,
+              "mode": mode, "baseline_commit": CONFIG["baseline_commit"],
               "seed": seed, "budget_per_original_task": budget, "opa": version,
               "w7": summary(CONFIG["w7_task_ids"]),
               "taint_provenance": summary(CONFIG["taint_task_ids"]),
@@ -302,7 +305,7 @@ def run(output_dir, *, mode="w7_plus_taint_guard", opa="opa", budget=None, seed=
               "tasks": tasks,
               "limitations": ["local synthetic W7 file requests, mock HTTP only",
                               "rule guard, not GLiClass/Laya/Llama model inference",
-                              "no post-patch experiment yet; no external anchor"]}
+                              "external timestamp anchor must be verified separately"]}
     (output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return report
 
@@ -314,8 +317,10 @@ def main():
     parser.add_argument("--opa", default=os.environ.get("OPA_BIN", "opa"))
     parser.add_argument("--budget", type=int)
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--phase", choices=("before", "after"), default="after")
     args = parser.parse_args()
-    result = run(args.output_dir, mode=args.mode, opa=args.opa, budget=args.budget, seed=args.seed)
+    result = run(args.output_dir, mode=args.mode, opa=args.opa, budget=args.budget, seed=args.seed,
+                 phase=args.phase)
     print(json.dumps({"w7": result["w7"], "taint_provenance": result["taint_provenance"],
                       "utility": result["utility"], "fpr": result["fpr"], "latency": result["latency"],
                       "evidence_dir": str(args.output_dir)}, ensure_ascii=False))

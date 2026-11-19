@@ -95,3 +95,18 @@ fails rather than silently treating OPA outages as a defense result.
 
 The pre-patch reports are evidence **only after** someone runs the commands.
 This folder itself does not contain fabricated benchmark outcomes.
+
+## Stage 4 — patched provenance and repeatable comparison
+
+The W4 `Tainted.split()` laundering defect is patched together with tuple/list
+source propagation, indexing and join. Collect a *real* before report at frozen
+pre-patch commit `aa58fc6`; do not create it by running the patched checkout.
+No measured ASR changes are claimed in this source commit.
+
+```bash
+git worktree add --detach /tmp/w8-prepatch aa58fc6
+(cd /tmp/w8-prepatch && OPA_BIN=opa python -m week8.adaptive --output-dir /tmp/w8-adapt-before --seed 20261119 --budget 50)
+OPA_BIN=opa python -m week8.adaptive --phase after --output-dir /tmp/w8-adapt-after --seed 20261119 --budget 50
+python -m week8.patch_compare --before /tmp/w8-adapt-before/report.json --after /tmp/w8-adapt-after/report.json --output-dir /tmp/w8-patch-compare
+python -m pytest -q week4/test_taint_propagation.py week8/test_pipeline.py week8/test_patch_compare.py
+```

@@ -97,9 +97,9 @@ def test_approval_binds_write_and_is_one_use(tmp_path):
     assert replay.reason == "approval_already_used" and not replay.tool_invoked
 
 
-def test_unpatched_w4_split_is_observed_not_silently_patched():
+def test_patched_w4_split_preserves_provenance_at_mock_sink():
     vulnerable, log = _taint_attempt("original")
-    assert vulnerable and log["tool_invoked"]
+    assert not vulnerable and not log["tool_invoked"]
     assert log["kind"] == "mock_http; no external network"
     preserved, log = _taint_attempt("spacing")
     assert not preserved and not log["tool_invoked"]

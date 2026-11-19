@@ -28,7 +28,11 @@ class Tainted:
             if other is not None:
                 sources.update(other.sources)
             return Tainted(result, sources)
-        # For non-string results, return plain value
+        # Do not launder metadata when str methods return containers.
+        if isinstance(result, list):
+            return [self._wrap_result(item, other) for item in result]
+        if isinstance(result, tuple):
+            return tuple(self._wrap_result(item, other) for item in result)
         return result
 
     # String-like operations
@@ -51,6 +55,21 @@ class Tainted:
             return Tainted(res, set(self.sources) | set(other.sources))
         res = str(other) + str(self.value)
         return Tainted(res, set(self.sources))
+
+    def __getitem__(self, index):
+        return self._wrap_result(self.value[index])
+
+    def join(self, parts):
+        sources = set(self.sources)
+        plain = []
+        for part in parts:
+            if isinstance(part, Tainted):
+                sources.update(part.sources)
+                part = part.value
+            if not isinstance(part, str):
+                raise TypeError("join requires string elements")
+            plain.append(part)
+        return Tainted(str(self.value).join(plain), sources)
 
     def __format__(self, spec):
         formatted = format(str(self.value), spec)
@@ -99,7 +118,7 @@ def is_tainted(obj: Any) -> bool:
         return obj.tainted
     if isinstance(obj, dict):
         return any(is_tainted(v) for v in obj.values())
-    if isinstance(obj, list):
+    if isinstance(obj, (list, tuple)):
         return any(is_tainted(v) for v in obj)
     return False
 
@@ -112,7 +131,7 @@ def collect_sources(obj: Any) -> set:
         for v in obj.values():
             s.update(collect_sources(v))
         return s
-    if isinstance(obj, list):
+    if isinstance(obj, (list, tuple)):
         s = set()
         for v in obj:
             s.update(collect_sources(v))
