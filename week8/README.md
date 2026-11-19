@@ -55,5 +55,43 @@ its exported JSON trace.
 python -B -m pytest -q -p no:cacheprovider week8/test_pipeline.py
 ```
 
+## Stage 3. Adaptive white-box evaluation (before patch)
 
-Adaptive attack runner is added in the next patch.
+```bash
+OPA_BIN=opa python -B -m week8.adaptive \
+  --mode w7_plus_taint_guard --budget 50 --seed 20261119 \
+  --output-dir /tmp/w8-adapt-before
+
+# Optional reference condition, using a NEW output directory:
+OPA_BIN=opa python -B -m week8.adaptive \
+  --mode w7_full --budget 50 --seed 20261119 \
+  --output-dir /tmp/w8-adapt-w7only
+```
+
+Candidate exploration is bounded and feedback-conditioned. Exercises eight
+W7 attack tasks: capability forgery, parent link, depth/scope widening, command
+replacement, signature substitution, approval swap/replay. The ninth task
+checks W4 `Tainted.split()` laundering through **mock-only** `http_get`. Each
+candidate records its mutation label, hashed identifier, rejection reason,
+all reached layer verdicts and actual observed sandbox/mock call evidence.
+The first successful variation stops exploration of its original task.
+
+**Crucial metric rule:** W7 adaptive ASR denominator is **8 original W7
+attack tasks**, never `8 × 50`; source-taint laundering is reported in a
+**separate 1-task provenance metric**. A taint-propagation escape is not proof
+of W7 credential/approval bypass. Failed searches mean "no bypass found
+within this budget", not "proven secure".
+
+`report.json`, `audit.jsonl`, `checkpoint.json` and `audit-signer.did` are
+saved in the requested evidence directory. The external Bitcoin timestamp
+anchor has not been performed. Run with a reachable OPA binary; the harness
+fails rather than silently treating OPA outages as a defense result.
+
+## Screenshot checklist
+
+- **Stage 1:** W7 pytest summary, `manifest.json` source hashes and baseline report table
+- **Stage 2:** `PipelineOutcome.layers` showing ordered decisions, `tool_invoked`, `output_released`, approval preview with operation/target/risk (via existing `python -m week7.run_approval_demo`)
+- **Stage 3:** per-task results and 50-attempt budget, the W4 `taint_split` mock execution trace, signed audit checkpoint
+
+The pre-patch reports are evidence **only after** someone runs the commands.
+This folder itself does not contain fabricated benchmark outcomes.
